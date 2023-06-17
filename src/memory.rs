@@ -1,5 +1,6 @@
 use std::io::{self, Read, BufReader};
 use std::fs::File;
+use std::path::PathBuf;
 
 const ROM_OFFSET: usize = 512;
 
@@ -23,12 +24,16 @@ impl Memory {
     }
   }
 
-  pub fn read_rom(&mut self, file: &str) -> io::Result<()> {
-    let f = File::open(file)?;
+  pub fn read_rom(&mut self, path: &PathBuf) -> io::Result<()> {
+    let f = File::open(path)?;
     let mut reader = BufReader::new(f);
     let mut buffer = Vec::<u8>::new();
     reader.read_to_end(&mut buffer)?;
     self.memcpy(&buffer, ROM_OFFSET);
     Ok(())
+  }
+
+  pub fn reset(&mut self) {
+    self.mem = [0; 4096];
   }
 }

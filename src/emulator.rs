@@ -1,8 +1,9 @@
 use crate::{
-  colors,
   cpu::Cpu,
   memory::Memory,
+  theme,
 };
+use std::env;
 use ggegui::{egui, Gui};
 use ggez::{
   Context,
@@ -11,6 +12,7 @@ use ggez::{
   event::EventHandler,
   graphics::{Canvas, Color, DrawParam},
 };
+use native_dialog::FileDialog;
 
 pub struct Emulator {
   cpu: Cpu,
@@ -25,15 +27,7 @@ impl Emulator {
       mem: Memory::new(),
       gui: Gui::new(ctx),
     };
-
-    let mut visuals = egui::Visuals::default();
-    visuals.override_text_color = Some(colors::into_color32(colors::Text));
-    visuals.panel_fill = colors::into_color32(colors::Background);
-    let mut style = egui::Style::default();
-    style.visuals = visuals;
-    s.gui.ctx().set_style(style);
-
-    // s.mem.read_rom("roms/IBM Logo.ch8")?;
+    s.gui.ctx().set_style(theme::egui_style());
     Ok(s)
   }
 }
@@ -44,15 +38,28 @@ impl EventHandler<GameError> for Emulator {
 
     let gui_ctx = self.gui.ctx();
     egui::CentralPanel::default().show(&gui_ctx, |ui| {
-      if ui.button("load").clicked() {
-        println!("load rom");
-      }
-      if ui.button("reset").clicked() {
-        println!("reset");
-      }
-      if ui.button("quit").clicked() {
-
-      }
+      ui.horizontal(|ui| {
+        if ui.button("load").clicked() {
+          let cwd = env::current_dir().unwrap();
+          let path = FileDialog::new()
+            .set_location(&cwd)
+            .add_filter("Chip 8 ROM", &["ch8"])
+            .show_open_single_file()
+            .unwrap();
+          if let Some(path) = path {
+            match self.mem.read_rom(&path) {
+              Ok(_) => println!("Loaded {}", path.display()),
+              Err(e) => println!("Could not load {}: {}", path.display(), &e),
+            }
+          }
+        }
+        if ui.button("reset").clicked() {
+          self.mem.reset();
+        }
+        if ui.button("quit").clicked() {
+          ctx.request_quit();
+        }
+      });
     });
     self.gui.update(ctx);
 

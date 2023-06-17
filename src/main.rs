@@ -1,7 +1,7 @@
-mod colors;
 mod cpu;
 mod emulator;
 mod memory;
+mod theme;
 
 use crate::emulator::Emulator;
 use ggez::{
