@@ -1,9 +1,11 @@
+use std::env;
+
 use crate::{
   cpu::Cpu,
   memory::Memory,
   theme,
 };
-use std::env;
+
 use ggegui::{egui, Gui};
 use ggez::{
   Context,
@@ -21,14 +23,14 @@ pub struct Emulator {
 }
 
 impl Emulator {
-  pub fn new(ctx: &mut Context) -> GameResult<Self> {
+  pub fn new(ctx: &mut Context) -> Self {
     let mut s = Self {
-      cpu: Cpu::new(),
-      mem: Memory::new(),
+      cpu: Cpu::default(),
+      mem: Memory::default(),
       gui: Gui::new(ctx),
     };
     s.gui.ctx().set_style(theme::egui_style());
-    Ok(s)
+    s
   }
 }
 
@@ -38,6 +40,7 @@ impl EventHandler<GameError> for Emulator {
 
     let gui_ctx = self.gui.ctx();
     egui::CentralPanel::default().show(&gui_ctx, |ui| {
+      ui.heading(egui::RichText::from("Chip 8"));
       ui.horizontal(|ui| {
         if ui.button("load").clicked() {
           let cwd = env::current_dir().unwrap();
@@ -47,7 +50,7 @@ impl EventHandler<GameError> for Emulator {
             .show_open_single_file()
             .unwrap();
           if let Some(path) = path {
-            match self.mem.read_rom(&path) {
+            match self.mem.load_rom(&path) {
               Ok(_) => println!("Loaded {}", path.display()),
               Err(e) => println!("Could not load {}: {}", path.display(), &e),
             }

@@ -338,6 +338,7 @@ dependencies = [
  "ggegui",
  "ggez",
  "native-dialog",
+ "thiserror",
 ]
 
 [[package]]

@@ -1,5 +1,5 @@
 use ggez::graphics::Color;
-use ggegui::egui;
+use ggegui::egui::{self, Style, Visuals, TextStyle, FontId};
 
 const BACKGROUND: Color = Color {
   r: 0.1,
@@ -20,21 +20,21 @@ fn into_color32(color: Color) -> egui::Color32 {
   egui::Color32::from_rgb(rgb.0, rgb.1, rgb.2)
 }
 
-pub fn egui_style() -> egui::Style {
-  let mut visuals = egui::Visuals::default();
+pub fn egui_style() -> Style {
+  let mut visuals = Visuals::default();
   visuals.override_text_color = Some(into_color32(TEXT));
   visuals.panel_fill = into_color32(BACKGROUND);
 
-  let mut style = egui::Style::default();
+  let mut style = Style::default();
   style.visuals = visuals;
   style.text_styles = [
-    (egui::TextStyle::Small, egui::FontId::new(9.0, egui::FontFamily::Proportional)),
-    (egui::TextStyle::Body, egui::FontId::new(12.5, egui::FontFamily::Proportional)),
-    (egui::TextStyle::Button, egui::FontId::new(12.5, egui::FontFamily::Proportional)),
-    (egui::TextStyle::Heading, egui::FontId::new(18.0, egui::FontFamily::Proportional)),
-    (egui::TextStyle::Monospace, egui::FontId::new(12.0, egui::FontFamily::Monospace)),
+    (TextStyle::Small, FontId::proportional(9.0)),
+    (TextStyle::Body, FontId::proportional(12.5)),
+    (TextStyle::Button, FontId::proportional(12.5)),
+    (TextStyle::Heading, FontId::proportional(18.0)),
+    (TextStyle::Monospace, FontId::monospace(12.0)),
   ].into();
-  style.spacing.button_padding = [10.0, 10.0].into();
+  style.spacing.button_padding = [40.0, 40.0].into();
   
   style
 }

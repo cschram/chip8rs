@@ -1,18 +1,22 @@
 use crate::memory::Memory;
+
 use ggez::GameResult;
 
 pub struct Cpu {
-  pc: u16,
+  _pc: u16,
 }
 
-impl Cpu {
-  pub fn new() -> Self {
+impl Default for Cpu {
+  fn default() -> Self {
     Self {
-      pc: 0,
+      _pc: 0,
     }
   }
+}
 
-  pub fn update(&mut self, mem: &mut Memory) -> GameResult {
+
+impl Cpu {
+  pub fn update(&mut self, _mem: &mut Memory) -> GameResult {
     Ok(())
   }
 }

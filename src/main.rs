@@ -1,15 +1,20 @@
 mod cpu;
 mod emulator;
+mod error;
 mod memory;
 mod theme;
 
-use crate::emulator::Emulator;
-use ggez::{
-  conf::{FullscreenType, NumSamples, WindowMode, WindowSetup},
-  ContextBuilder, GameResult,
+use crate::{
+  emulator::Emulator,
+  error::Chip8Result,
 };
 
-pub fn main() -> GameResult {
+use ggez::{
+  conf::{FullscreenType, NumSamples, WindowMode, WindowSetup},
+  ContextBuilder,
+};
+
+pub fn main() -> Chip8Result {
   let cb = ContextBuilder::new("Chip 8 Emulator", "Corey Schram")
     .window_setup(WindowSetup {
       title: "Chip 8 Emulator".to_owned(),
@@ -35,6 +40,6 @@ pub fn main() -> GameResult {
       logical_size: None,
     });
   let (mut ctx, event_loop) = cb.build()?;
-  let state = Emulator::new(&mut ctx)?;
+  let state = Emulator::new(&mut ctx);
   ggez::event::run(ctx, event_loop, state)
 }
