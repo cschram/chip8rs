@@ -20,7 +20,7 @@ impl Default for Memory {
 }
 
 impl Memory {
-  pub fn reset(&mut self) {
+  pub fn _reset(&mut self) {
     self.mem = [0; 4096];
   }
 

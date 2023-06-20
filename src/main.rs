@@ -1,3 +1,4 @@
+mod button;
 mod cpu;
 mod emulator;
 mod error;
@@ -40,6 +41,6 @@ pub fn main() -> Chip8Result {
       logical_size: None,
     });
   let (mut ctx, event_loop) = cb.build()?;
-  let state = Emulator::new(&mut ctx);
+  let state = Emulator::new(&mut ctx)?;
   ggez::event::run(ctx, event_loop, state)
 }
