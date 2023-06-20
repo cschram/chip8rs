@@ -12,16 +12,21 @@ use ggez::{
   Context,
   GameResult,
   GameError,
-  event::EventHandler,
+  event::{EventHandler, MouseButton},
   graphics::{Canvas, DrawParam},
   glam::Vec2,
 };
 use native_dialog::FileDialog;
 
+const TARGET_FPS: u32 = 60;
+
 pub struct Emulator {
   cpu: Cpu,
   mem: Memory,
+  display: [u8; 2048],
+  rom_loaded: bool,
   load_button: Button,
+  reset_button: Button,
 }
 
 impl Emulator {
@@ -29,11 +34,14 @@ impl Emulator {
     Ok(Self {
       cpu: Cpu::default(),
       mem: Memory::default(),
-      load_button: Button::new("Load", Vec2::ZERO, ctx)?,
+      display: [0; 2048],
+      rom_loaded: false,
+      load_button: Button::new("load", 18.0, Vec2::ZERO, ctx)?,
+      reset_button: Button::new("reset", 18.0, Vec2::new(576.0, 0.0), ctx)?,
     })
   }
 
-  pub fn _load_rom(&mut self) {
+  pub fn load_rom(&mut self) {
     let cwd = env::current_dir().unwrap();
     let path = FileDialog::new()
       .set_location(&cwd)
@@ -42,16 +50,49 @@ impl Emulator {
       .unwrap();
     if let Some(path) = path {
       match self.mem.load_rom(&path) {
-        Ok(_) => println!("Loaded {}", path.display()),
+        Ok(_) => {
+          self.rom_loaded = true;
+          println!("Loaded {}", path.display())
+        },
         Err(e) => println!("Could not load {}: {}", path.display(), &e),
       }
     }
   }
+  
+  pub fn reset(&mut self) {
+    self.display = [0; 2048];
+    self.rom_loaded = false;
+    self.cpu.reset();
+    self.mem.reset();
+    println!("Reset emulator");
+  }
 }
 
 impl EventHandler<GameError> for Emulator {
-  fn update(&mut self, _ctx: &mut Context) -> GameResult {
-    self.cpu.update(&mut self.mem)?;
+  fn mouse_button_down_event(
+    &mut self,
+    ctx: &mut Context,
+    button: MouseButton,
+    x: f32,
+    y: f32,
+  ) -> GameResult {
+    if button == MouseButton::Left {
+      if self.load_button.hover(x, y, ctx) {
+        self.load_rom();
+      }
+      if self.reset_button.hover(x, y, ctx) {
+        self.reset();
+      }
+    }
+    Ok(())
+  }
+
+  fn update(&mut self, ctx: &mut Context) -> GameResult {
+    while ctx.time.check_update_time(TARGET_FPS) {
+      if self.rom_loaded {
+        self.cpu.tick(&mut self.mem)?;
+      }
+    }
     Ok(())
   }
 
@@ -62,6 +103,10 @@ impl EventHandler<GameError> for Emulator {
     );
     canvas.draw(
       &self.load_button, 
+      DrawParam::default(),
+    );
+    canvas.draw(
+      &self.reset_button, 
       DrawParam::default(),
     );
     canvas.finish(ctx)

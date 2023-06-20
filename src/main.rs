@@ -2,6 +2,7 @@ mod button;
 mod cpu;
 mod emulator;
 mod error;
+mod font;
 mod memory;
 mod theme;
 
@@ -25,8 +26,8 @@ pub fn main() -> Chip8Result {
       srgb: true,
     })
     .window_mode(WindowMode {
-      width: 1024.0,
-      height: 1024.0,
+      width: 640.0,
+      height: 354.0,
       maximized: false,
       fullscreen_type: FullscreenType::Windowed,
       borderless: false,

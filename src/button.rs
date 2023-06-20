@@ -12,7 +12,9 @@ use ggez::{
     DrawParam,
     GraphicsContext,
     Mesh,
+    PxScale,
     Text,
+    TextFragment,
     Rect,
   },
   glam::Vec2,
@@ -30,11 +32,14 @@ pub struct Button {
 }
 
 impl Button {
-  pub fn new(label: &str, pos: Vec2, ctx: &Context) -> Chip8Result<Self> {
-    let mut text = Text::new(label);
-    text.set_scale(24.0);
+  pub fn new(label: &str, size: f32, pos: Vec2, ctx: &Context) -> Chip8Result<Self> {
+    let text = Text::new(TextFragment {
+      text: label.to_owned(),
+      color: Some(theme::TEXT),
+      font: None,
+      scale: Some(PxScale::from(size))
+    });
     let text_dim = text.dimensions(ctx).unwrap();
-    println!("{:?}", text_dim);
     let mesh = Mesh::new_rectangle(
       ctx,
       DrawMode::fill(),
@@ -47,20 +52,26 @@ impl Button {
       pos,
     })
   }
+
+  pub fn hover(&self, x: f32, y: f32, ctx: &Context) -> bool {
+    let dim = self.dimensions(ctx).unwrap();
+    x >= dim.x && x <= dim.right() && y >= dim.y && y <= dim.bottom()
+  }
 }
 
 impl Drawable for Button {
   fn draw(&self, canvas: &mut Canvas, _param: impl Into<DrawParam>) {
     canvas.draw(&self.mesh, self.pos);
-    canvas.draw(
-      &self.text, 
-      DrawParam::default()
-        .color(theme::TEXT)
-        .offset(self.pos + PADDING)
-    );
+    canvas.draw(&self.text, self.pos + PADDING);
   }
 
   fn dimensions(&self, gfx: &impl Has<GraphicsContext>) -> Option<Rect> {
-    self.mesh.dimensions(gfx)
+    let mesh_dim = self.mesh.dimensions(gfx)?;
+    Some(Rect {
+      x: self.pos.x,
+      y: self.pos.y,
+      w: mesh_dim.w,
+      h: mesh_dim.h,
+    })
   }
 }
