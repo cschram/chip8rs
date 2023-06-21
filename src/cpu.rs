@@ -49,6 +49,9 @@ impl Cpu {
 
     match instruction {
       Some(instr) => {
+        if instr.debug {
+          println!("{:#06x} | {}", opcode, instr.name);
+        }
         instr.execute(opcode, mem, &mut self.registers, display)
       },
       None => {
