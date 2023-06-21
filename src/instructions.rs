@@ -46,7 +46,7 @@ pub fn get_instructions() -> Vec<Instruction> {
       name: "0x6xnn LD Vx, byte".to_owned(),
       id: 0x6000,
       mask: 0xF000,
-      debug: true,
+      debug: false,
       op: |opcode, _mem, registers, _display| {
         let x = (opcode & 0x0F00) >> 8;
         let nn = opcode & 0x00FF;
@@ -65,19 +65,26 @@ pub fn get_instructions() -> Vec<Instruction> {
       name: "0x7xnn ADD Vx, byte".to_owned(),
       id: 0x7000,
       mask: 0xF000,
-      debug: true,
+      debug: false,
       op: |opcode, _mem, registers, _display| {
         let x = (opcode & 0x0F00) >> 8;
         let nn = opcode & 0x00FF;
-        registers.v[x as usize] += nn as u8;
-        Ok(())
+        if x > 15 {
+          Err(Chip8Error::InstructionExecutionError(
+            opcode,
+            format!("Invalid register address {}", x)
+          ))
+        } else {
+          registers.v[x as usize] += nn as u8;
+          Ok(())
+        }
       }
     },
     Instruction {
       name: "0xAnnn LD I, addr".to_owned(),
       id: 0xA000,
       mask: 0xF000,
-      debug: true,
+      debug: false,
       op: |opcode, _mem, registers, _display| {
         let nnn = opcode & 0x0FFF;
         registers.i = nnn;
@@ -88,27 +95,29 @@ pub fn get_instructions() -> Vec<Instruction> {
       name: "0xDxyn DRW Vx, Vy, nibble".to_owned(),
       id: 0xD000,
       mask: 0xF000,
-      debug: true,
+      debug: false,
       op: |opcode, mem, registers, display| {
         // Read arguments
-        let vx = registers.v[((opcode & 0x0F00) >> 8) as usize] % 64;
-        let vy = registers.v[((opcode & 0x00F0) >> 4) as usize] % 32;
+        let x = (opcode & 0x0F00) >> 8;
+        let y = (opcode & 0x00F0) >> 4;
         let n = opcode & 0x000F;
+        let vx = registers.v[x as usize] % 64;
+        let vy = registers.v[y as usize] % 32;
 
         // Reset VF register
         registers.v[15] = 0;
 
-        for y in 0..n {
-          let py = vy as u16 + y;
+        for yi in 0..n {
+          let py = vy as u16 + yi;
           if py < 32 {
-            let byte = mem.read_byte((registers.i + y) as usize)?;
-            for x in 0..8 {
-              let px = vx as u16 + x;
-              if px < 64 && (byte & (1 << x)) > 0 {
+            let byte = mem.read_byte((registers.i + yi) as usize)?;
+            for xi in 0..8 {
+              let px = vx as u16 + xi;
+              if px < 64 && (byte & (0x80 >> xi)) != 0 {
                 // Flip display pixel if sprite bit is set
-                println!("({},{})", px, py);
                 if display.pixel(px, py) {
                   display.set_pixel(px, py, false);
+                  // Set the VF register if a pixel is unset
                   registers.v[15] = 1;
                 } else {
                   display.set_pixel(px, py, true);
@@ -118,7 +127,6 @@ pub fn get_instructions() -> Vec<Instruction> {
           }
         }
 
-        println!("VF: {}", registers.v[15]);
         Ok(())
       }
     },
