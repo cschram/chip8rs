@@ -47,20 +47,29 @@ impl Memory {
     self.load_font();
   }
 
-  pub fn read(&self, pos: usize, len: usize) -> Option<&[u8]> {
-    if pos + len < MEMORY_SIZE {
-      Some(&self.mem[pos..len])
+  pub fn read(&self, addr: usize, len: usize) -> Chip8Result<&[u8]> {
+    let end = addr + len;
+    if end < MEMORY_SIZE {
+      Ok(&self.mem[addr..end])
     } else {
-      None
+      Err(Chip8Error::InvalidAddressError(addr))
     }
   }
 
-  pub fn write(&mut self, pos: usize, data: &[u8]) -> Chip8Result {
-    if pos + data.len() >= 4096 {
-      Err(Chip8Error::GenericError("Attempted to write data outside of emulator memory bounds".to_owned()))
+  pub fn read_byte(&self, addr: usize) -> Chip8Result<u8> {
+    if addr < MEMORY_SIZE {
+      Ok(self.mem[addr])
+    } else {
+      Err(Chip8Error::InvalidAddressError(addr))
+    }
+  }
+
+  pub fn write(&mut self, addr: usize, data: &[u8]) -> Chip8Result {
+    if addr + data.len() >= 4096 {
+      Err(Chip8Error::InvalidAddressError(addr))
     } else {
       for i in 0..data.len() {
-        self.mem[pos + i] = data[i];
+        self.mem[addr + i] = data[i];
       }
       Ok(())
     }

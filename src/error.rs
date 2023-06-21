@@ -8,8 +8,21 @@ pub enum Chip8Error {
   IOError(#[from] std::io::Error),
   #[error("Error: {0}")]
   GenericError(String),
-  #[error("Instruction Error at {0}: {1}")]
-  InstructionError(u16, String)
+  #[error("Invalid address {:#06x}", .0)]
+  InvalidAddressError(usize),
+  #[error("Invalid instruction {:#06x} at address {:#06x}", .1, .0)]
+  InvalidInstructionError(usize, u16),
+  #[error("Error executing instruction {:#06x}: {}", .0, .1)]
+  InstructionExecutionError(u16, String)
 }
 
 pub type Chip8Result<T = ()> = Result<T, Chip8Error>;
+
+impl Into<ggez::GameError> for Chip8Error {
+  fn into(self) -> ggez::GameError {
+    match self {
+      Chip8Error::EngineError(err) => err,
+      _ => ggez::GameError::CustomError(self.to_string())
+    }
+  }
+}

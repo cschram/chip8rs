@@ -3,7 +3,9 @@ mod cpu;
 mod display;
 mod emulator;
 mod error;
+mod instructions;
 mod memory;
+mod registers;
 mod theme;
 
 use crate::{

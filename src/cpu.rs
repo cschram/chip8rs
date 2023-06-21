@@ -1,59 +1,58 @@
 use crate::{
   error::*,
+  display::Display,
+  instructions::*,
   memory::Memory,
+  registers::Registers,
 };
 
 const INSTRUCTIONS_PER_SECOND: f32 = 700.0;
 
 
 pub struct Cpu {
-  pc: u16,
-  l: u16,
-  stack: Vec<u16>,
-  delay_timer: u8,
-  sound_timer: u8,
-  registers: [u8; 16],
+  instructions: Vec<Instruction>,
+  registers: Registers,
 }
 
 impl Default for Cpu {
   fn default() -> Self {
     Self {
-      pc: 512,
-      l: 0,
-      stack: Vec::new(),
-      delay_timer: 0,
-      sound_timer: 0,
-      registers: [0; 16],
+      registers: Registers::default(),
+      instructions: get_instructions(),
     }
   }
 }
 
 impl Cpu {
   pub fn reset(&mut self) {
-    self.pc = 512;
-    self.l = 0;
-    self.stack = Vec::new();
-    self.delay_timer = 0;
-    self.sound_timer = 0;
-    self.registers = [0; 16];
+    self.registers = Registers::default();
   }
 
-  pub fn tick(&mut self, mem: &mut Memory, delta: f32) -> Chip8Result {
+  pub fn tick(&mut self, mem: &mut Memory, display: &mut Display, delta: f32) -> Chip8Result {
     let num_instructions = (INSTRUCTIONS_PER_SECOND * delta) as u32;
     for _ in 0..num_instructions {
-      self.execute(mem)?;
+      self.execute(mem, display)?;
     }
     Ok(())
   }
 
-  fn execute(&mut self, mem: &mut Memory) -> Chip8Result {
-    match mem.read(self.pc as usize, 2) {
-      Some(instruction) => {
-        self.pc += 2;
-        Ok(())
+  fn execute(&mut self, mem: &mut Memory, display: &mut Display) -> Chip8Result {
+    let pc = self.registers.pc as usize;
+    self.registers.pc += 2;
+
+    let opbytes = mem.read(pc, 2)?;
+    let opcode = (opbytes[0] as u16) << 8 | (opbytes[1] as u16);
+
+    let instruction = self.instructions.iter().find(|instr| {
+      (opcode & instr.mask) == instr.id
+    });
+
+    match instruction {
+      Some(instr) => {
+        instr.execute(opcode, mem, &mut self.registers, display)
       },
       None => {
-        Err(Chip8Error::InstructionError(self.pc, "Out of bounds".to_owned()))
+        return Err(Chip8Error::InvalidInstructionError(pc, opcode))
       }
     }
   }

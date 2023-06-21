@@ -80,7 +80,7 @@ impl Emulator {
     self.rom_loaded = false;
     self.cpu.reset();
     self.mem.reset();
-    self.display.reset();
+    self.display.clear();
     println!("Reset emulator");
   }
 }
@@ -107,7 +107,9 @@ impl EventHandler<GameError> for Emulator {
   fn update(&mut self, ctx: &mut Context) -> GameResult {
     while ctx.time.check_update_time(TARGET_FPS) {
       if self.rom_loaded {
-        self.cpu.tick(&mut self.mem, ctx.time.delta().as_secs_f32())?;
+        if let Err(err) = self.cpu.tick(&mut self.mem, &mut self.display, ctx.time.delta().as_secs_f32()) {
+          return Err(err.into());
+        }
       }
     }
     Ok(())
