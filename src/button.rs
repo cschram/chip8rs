@@ -4,7 +4,7 @@ use crate::{
 };
 
 use ggez::{
-  context::{Context, Has},
+  context::Has,
   graphics::{
     Canvas,
     Drawable,
@@ -26,22 +26,23 @@ const PADDING: Vec2 = Vec2 {
 };
 
 pub struct Button {
+  pub pos: Vec2,
+  
   text: Text,
   mesh: Mesh,
-  pos: Vec2,
 }
 
 impl Button {
-  pub fn new(label: &str, size: f32, pos: Vec2, ctx: &Context) -> Chip8Result<Self> {
+  pub fn new(label: &str, size: f32, pos: Vec2, gfx: &impl Has<GraphicsContext>) -> Chip8Result<Self> {
     let text = Text::new(TextFragment {
       text: label.to_owned(),
       color: Some(theme::TEXT),
       font: None,
       scale: Some(PxScale::from(size))
     });
-    let text_dim = text.dimensions(ctx).unwrap();
+    let text_dim = text.dimensions(gfx).unwrap();
     let mesh = Mesh::new_rectangle(
-      ctx,
+      gfx,
       DrawMode::fill(),
       Rect::new(0.0, 0.0, text_dim.w + (PADDING.x * 2.0), text_dim.h + (PADDING.y * 2.0)),
       theme::WIDGET,
@@ -53,8 +54,18 @@ impl Button {
     })
   }
 
-  pub fn hover(&self, x: f32, y: f32, ctx: &Context) -> bool {
-    let dim = self.dimensions(ctx).unwrap();
+  pub fn width(&self, gfx: &impl Has<GraphicsContext>) -> f32 {
+    let dim = self.dimensions(gfx).unwrap();
+    dim.w
+  }
+
+  pub fn height(&self, gfx: &impl Has<GraphicsContext>) -> f32 {
+    let dim = self.dimensions(gfx).unwrap();
+    dim.h
+  }
+
+  pub fn hover(&self, x: f32, y: f32, gfx: &impl Has<GraphicsContext>) -> bool {
+    let dim = self.dimensions(gfx).unwrap();
     x >= dim.x && x <= dim.right() && y >= dim.y && y <= dim.bottom()
   }
 }

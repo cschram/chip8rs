@@ -1,13 +1,13 @@
 mod button;
 mod cpu;
+mod display;
 mod emulator;
 mod error;
-mod font;
 mod memory;
 mod theme;
 
 use crate::{
-  emulator::Emulator,
+  emulator::{Emulator, screen_height, screen_width},
   error::Chip8Result,
 };
 
@@ -26,8 +26,8 @@ pub fn main() -> Chip8Result {
       srgb: true,
     })
     .window_mode(WindowMode {
-      width: 640.0,
-      height: 354.0,
+      width: screen_width(),
+      height: screen_height(),
       maximized: false,
       fullscreen_type: FullscreenType::Windowed,
       borderless: false,

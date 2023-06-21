@@ -6,6 +6,26 @@ use crate::error::*;
 
 const MEMORY_SIZE: usize = 4096;
 const ROM_OFFSET: usize = 512;
+const FONT_OFFSET: usize = 80;
+
+const CHIP8_FONT: [u8; 80] = [
+  0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+  0x20, 0x60, 0x20, 0x20, 0x70, // 1
+  0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+  0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+  0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+  0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+  0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+  0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+  0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+  0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+  0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+  0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+  0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+  0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+  0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+  0xF0, 0x80, 0xF0, 0x80, 0x80, // F
+];
 
 pub struct Memory {
   mem: [u8; MEMORY_SIZE],
@@ -13,18 +33,21 @@ pub struct Memory {
 
 impl Default for Memory {
   fn default() -> Self {
-    Self {
+    let mut m = Self {
       mem: [0; MEMORY_SIZE],
-    }
+    };
+    m.load_font();
+    m
   }
 }
 
 impl Memory {
   pub fn reset(&mut self) {
     self.mem = [0; 4096];
+    self.load_font();
   }
 
-  pub fn _read(&self, pos: usize, len: usize) -> Option<&[u8]> {
+  pub fn read(&self, pos: usize, len: usize) -> Option<&[u8]> {
     if pos + len < MEMORY_SIZE {
       Some(&self.mem[pos..len])
     } else {
@@ -50,5 +73,11 @@ impl Memory {
     reader.read_to_end(&mut buffer)?;
     self.write(ROM_OFFSET, &buffer)?;
     Ok(())
+  }
+
+  fn load_font(&mut self) {
+    for i in 0..CHIP8_FONT.len() {
+      self.mem[i + FONT_OFFSET] = CHIP8_FONT[i];
+    }
   }
 }
