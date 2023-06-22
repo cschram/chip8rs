@@ -6,7 +6,7 @@ use crate::error::*;
 
 const MEMORY_SIZE: usize = 4096;
 const ROM_OFFSET: usize = 512;
-const FONT_OFFSET: usize = 80;
+pub const FONT_OFFSET: usize = 80;
 
 const CHIP8_FONT: [u8; 80] = [
   0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -71,6 +71,15 @@ impl Memory {
       for i in 0..data.len() {
         self.mem[addr + i] = data[i];
       }
+      Ok(())
+    }
+  }
+
+  pub fn write_byte(&mut self, addr: usize, byte: u8) -> Chip8Result {
+    if addr >= 4096 {
+      Err(Chip8Error::InvalidAddressError(addr))
+    } else {
+      self.mem[addr] = byte;
       Ok(())
     }
   }

@@ -29,6 +29,12 @@ impl Cpu {
   }
 
   pub fn tick(&mut self, mem: &mut Memory, display: &mut Display, delta: f32) -> Chip8Result {
+    if self.registers.delay_timer > 0 {
+      self.registers.delay_timer -= 1;
+    }
+    if self.registers.sound_timer > 0 {
+      self.registers.sound_timer -= 1;
+    }
     let num_instructions = (INSTRUCTIONS_PER_SECOND * delta) as u32;
     for _ in 0..num_instructions {
       self.execute(mem, display)?;
@@ -58,5 +64,13 @@ impl Cpu {
         return Err(Chip8Error::InvalidInstructionError(pc, opcode))
       }
     }
+  }
+
+  pub fn keydown(&mut self, key: usize) {
+    self.registers.keys[key] = true;
+  }
+
+  pub fn keyup(&mut self, key: usize) {
+    self.registers.keys[key] = false;
   }
 }

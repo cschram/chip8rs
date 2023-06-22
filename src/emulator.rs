@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, collections::HashMap};
 
 use crate::{
   button::Button,
@@ -15,13 +15,33 @@ use ggez::{
   GameError,
   event::{EventHandler, MouseButton},
   graphics::{Canvas, DrawParam},
-  glam::Vec2,
+  input::keyboard::KeyInput,
+  glam::Vec2, winit::event::VirtualKeyCode,
 };
 use native_dialog::FileDialog;
 
 const TARGET_FPS: u32 = 60;
 
 pub const DISPLAY_SCALE: f32 = 10.0;
+
+pub const KEYS: [VirtualKeyCode; 16] = [
+  VirtualKeyCode::Key1,
+  VirtualKeyCode::Key2,
+  VirtualKeyCode::Key3,
+  VirtualKeyCode::Key4,
+  VirtualKeyCode::Q,
+  VirtualKeyCode::W,
+  VirtualKeyCode::E,
+  VirtualKeyCode::R,
+  VirtualKeyCode::A,
+  VirtualKeyCode::S,
+  VirtualKeyCode::D,
+  VirtualKeyCode::F,
+  VirtualKeyCode::Z,
+  VirtualKeyCode::X,
+  VirtualKeyCode::C,
+  VirtualKeyCode::V,
+];
 
 pub fn screen_width() -> f32 {
   64.0 * DISPLAY_SCALE
@@ -100,6 +120,25 @@ impl EventHandler<GameError> for Emulator {
       if self.reset_button.hover(x, y, ctx) {
         self.reset();
       }
+    }
+    Ok(())
+  }
+
+  fn key_down_event(
+    &mut self,
+    _ctx: &mut Context,
+    input: KeyInput,
+    _repeated: bool,
+  ) -> GameResult {
+    if let Some(key) = KEYS.iter().position(|key| input.keycode.eq(&Some(*key))) {
+      self.cpu.keydown(key);
+    }
+    Ok(())
+  }
+
+  fn key_up_event(&mut self, _ctx: &mut Context, input: KeyInput) -> GameResult {
+    if let Some(key) = KEYS.iter().position(|key| input.keycode.eq(&Some(*key))) {
+      self.cpu.keyup(key);
     }
     Ok(())
   }
