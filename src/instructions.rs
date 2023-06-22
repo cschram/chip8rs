@@ -984,4 +984,15 @@ mod tests {
     exec(jp_v0_addr(), 0xB010, &mut mem, &mut registers, &mut screen);
     assert_eq!(registers.pc, 32);
   }
+
+  #[test]
+  fn test_drw_vx_vy_n() {
+    // TODO
+  }
+
+  #[test]
+  fn test_skp_vx() {
+    let (mut mem, mut registers, mut screen) = deps();
+    exec(skp_vx(), 0xE09E, &mut mem, &mut registers, &mut screen);
+  }
 }
