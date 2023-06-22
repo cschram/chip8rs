@@ -2,6 +2,8 @@ use crate::error::*;
 
 use rand::prelude::*;
 
+const MAX_STACK: usize = 16;
+
 pub struct Registers {
   pub pc: u16,
   pub i: u16,
@@ -30,12 +32,18 @@ impl Default for Registers {
 }
 
 impl Registers {
-  pub fn push(&mut self, addr: u16) {
-    self.stack.push(addr);
+  pub fn push(&mut self, addr: u16) -> Chip8Result {
+    if self.stack.len() < MAX_STACK {
+      self.stack.push(addr);
+      Ok(())
+    } else {
+      println!("{:?}", self.stack);
+      Err(Chip8Error::StackOverflow)
+    }
   }
 
   pub fn pop(&mut self) -> Chip8Result<u16> {
-    self.stack.pop().ok_or(Chip8Error::EmptyStack)
+    self.stack.pop().ok_or(Chip8Error::StackUnderflow)
   }
 
   pub fn get_v(&self, index: usize) -> Chip8Result<u8> {
@@ -55,7 +63,8 @@ impl Registers {
     }
   }
 
-  pub fn _get_vf(&self) -> u8 {
+  #[allow(dead_code)]
+  pub fn get_vf(&self) -> u8 {
     self.v[15]
   }
 

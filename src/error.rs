@@ -7,6 +7,8 @@ pub enum Chip8Error {
   EngineError(#[from] ggez::GameError),
   #[error("IO Error: {0}")]
   IOError(#[from] std::io::Error),
+  #[error("Error executing instruction {:#06x}: {}", .0, .1)]
+  ExecutionError(u16, String),
   #[error("Invalid address {:#06x}", .0)]
   InvalidAddressError(usize),
   #[error("Invalid instruction {:#06x} at address {:#06x}", .1, .0)]
@@ -15,8 +17,10 @@ pub enum Chip8Error {
   InvalidRegister(usize),
   #[error("Invalid key {0}")]
   InvalidKey(usize),
-  #[error("Attempted to pop from empty stack")]
-  EmptyStack,
+  #[error("Stack overflow")]
+  StackOverflow,
+  #[error("Stack underflow")]
+  StackUnderflow,
 }
 
 impl Into<ggez::GameError> for Chip8Error {

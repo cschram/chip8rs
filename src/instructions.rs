@@ -7,6 +7,8 @@ use crate::{
 
 use rand::Rng;
 
+const DEBUG: bool = false;
+
 pub struct Instruction {
   pub name: String,
   pub id: u16,
@@ -29,15 +31,15 @@ impl Instruction {
 
     match Instruction::decode(opcode, instructions) {
       Some(instr) => {
-        if instr.debug {
-          println!("{:#06x} | {}", opcode, instr.name);
+        if instr.debug || DEBUG {
+          println!("{:#06x} | {:#06x} | {}", pc, opcode, instr.name);
         }
         (instr.execute)(opcode, mem, registers, display)
       },
       None => {
-        return Err(Chip8Error::InvalidInstructionError(pc, opcode))
+        Err(Chip8Error::InvalidInstructionError(pc, opcode))
       }
-    }
+    }.map_err(|err| Chip8Error::ExecutionError(opcode, err.to_string()))
   }
 
   fn decode(opcode: u16, instructions: &Vec<Instruction>) -> Option<&Instruction> {
@@ -51,7 +53,7 @@ fn sys_addr() -> Instruction {
   Instruction {
     name: "0nnn SYS addr".to_owned(),
     id: 0x0000,
-    mask: 0xF000,
+    mask: 0xFFFF,
     debug: false,
     execute: |_opcode, _mem, registers, _screen| {
       registers.pc += 2;
@@ -64,7 +66,7 @@ fn cls() -> Instruction  {
   Instruction {
     name: "00E0 CLS".to_owned(),
     id: 0x00E0,
-    mask: 0x00F0,
+    mask: 0x00FF,
     debug: false,
     execute: |_opcode, _mem, registers, screen| {
       screen.clear();
@@ -81,7 +83,7 @@ fn ret() -> Instruction  {
     mask: 0x00FF,
     debug: false,
     execute: |_opcode, _mem, registers, _screen| {
-      registers.pc = registers.pop()?;
+      registers.pc = registers.pop()? + 2;
       Ok(())
     }
   }
@@ -109,7 +111,7 @@ fn call_addr() -> Instruction  {
     debug: false,
     execute: |opcode, _mem, registers, _screen| {
       let nnn = opcode & 0x0FFF;
-      registers.push(registers.pc);
+      registers.push(registers.pc)?;
       registers.pc = nnn;
       Ok(())
     }
@@ -163,9 +165,9 @@ fn se_vx_vy() -> Instruction  {
     mask: 0xF00F,
     debug: false,
     execute: |opcode, _mem, registers, _screen| {
-      let x = (opcode & 0x0F00) >> 8;
-      let y = (opcode & 0x00F0) >> 4;
-      if x == y {
+      let vx = registers.get_v(((opcode & 0x0F00) >> 8) as usize)?;
+      let vy = registers.get_v(((opcode & 0x00F0) >> 4) as usize)?;
+      if vx == vy {
         registers.pc += 4;
       } else {
         registers.pc += 2;
@@ -309,8 +311,13 @@ fn sub_vx_vy() -> Instruction {
       let y = ((opcode & 0x00F0) >> 4) as usize;
       let vx = registers.get_v(x)?;
       let vy = registers.get_v(y)?;
-      registers.set_v(x, vx - vy)?;
-      registers.set_vf(if vx > vy { 1 } else { 0 });
+      if vx > vy {
+        registers.set_v(x, vx - vy)?;
+        registers.set_vf(1);
+      } else {
+        registers.set_v(x, 255 - (vy - vx - 1))?;
+        registers.set_vf(0);
+      }
       registers.pc += 2;
       Ok(())
     }
@@ -327,7 +334,7 @@ fn shr_vx() -> Instruction {
       let x = ((opcode & 0x0F00) >> 8) as usize;
       let vx = registers.get_v(x)?;
       registers.set_v(x, vx >> 1)?;
-      registers.set_vf(if vx & 1 == 1 { 1 } else { 0 });
+      registers.set_vf(vx & 1);
       registers.pc += 2;
       Ok(())
     }
@@ -345,8 +352,13 @@ fn subn_vx_vy() -> Instruction {
       let y = ((opcode & 0x00F0) >> 4) as usize;
       let vx = registers.get_v(x)?;
       let vy = registers.get_v(y)?;
-      registers.set_v(x, vy - vx)?;
-      registers.set_vf(if vy > vx { 1 } else { 0 });
+      if vy > vx {
+        registers.set_v(x, vy - vx)?;
+        registers.set_vf(1);
+      } else {
+        registers.set_v(x, 255 - (vx - vy - 1))?;
+        registers.set_vf(0);
+      }
       registers.pc += 2;
       Ok(())
     }
@@ -363,7 +375,7 @@ fn shl_vx() -> Instruction {
       let x = ((opcode & 0x0F00) >> 8) as usize;
       let vx = registers.get_v(x)?;
       registers.set_v(x, vx << 1)?;
-      registers.set_vf(if vx & 0x80 == 1 { 1 } else { 0 });
+      registers.set_vf(vx >> 7);
       registers.pc += 2;
       Ok(())
     }
@@ -568,7 +580,7 @@ fn ld_st_vx() -> Instruction {
     name: "Fx18 LD ST, Vx".to_owned(),
     id: 0xF018,
     mask: 0xF0FF,
-    debug: true,
+    debug: false,
     execute: |opcode, _mem, registers, _screen| {
       let x = ((opcode & 0x0F00) >> 8) as usize;
       registers.sound_timer = registers.get_v(x)?;
@@ -716,24 +728,260 @@ mod tests {
     (Memory::default(), Registers::default(), MockChip8Screen::new())
   }
 
+  fn exec(
+    instr: Instruction,
+    opcode: u16,
+    mem: &mut Memory,
+    registers: &mut Registers,
+    screen: &mut MockChip8Screen,
+  ) {
+    assert!(
+      (instr.execute)(
+        opcode,
+        mem,
+        registers,
+        screen,
+      ).is_ok()
+    );
+  }
+
+  fn exec_err(
+    instr: Instruction,
+    opcode: u16,
+    mem: &mut Memory,
+    registers: &mut Registers,
+    screen: &mut MockChip8Screen,
+  ) {
+    assert!(
+      (instr.execute)(
+        opcode,
+        mem,
+        registers,
+        screen,
+      ).is_err()
+    );
+  }
+
   #[test]
   fn test_cls() {
     let (mut mem, mut registers, mut screen) = deps();
-    let i_cls = cls();
     screen.expect_clear()
       .times(1)
       .return_const(());
-    assert!((i_cls.execute)(0x00E0, &mut mem, &mut registers, &mut screen).is_ok());
+    exec(cls(), 0x00E0, &mut mem, &mut registers, &mut screen);
   }
 
   #[test]
   fn test_ret() {
     let (mut mem, mut registers, mut screen) = deps();
-    let i_ret = ret();
-    registers.push(0xF);
-    assert!((i_ret.execute)(0x00EE, &mut mem, &mut registers, &mut screen).is_ok());
-    assert_eq!(registers.pc, 0xF);
+    registers.push(0xF0).unwrap();
+    exec(ret(), 0x00EE, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.pc, 0xF2);
     // TODO: Assert on error type
-    assert!((i_ret.execute)(0x00EE, &mut mem, &mut registers, &mut screen).is_err());
+    exec_err(ret(), 0x00EE, &mut mem, &mut registers, &mut screen);
+  }
+
+  #[test]
+  fn test_jp_addr() {
+    let (mut mem, mut registers, mut screen) = deps();
+    exec(jp_addr(), 0x10F0, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.pc, 0x0F0);
+  }
+
+  #[test]
+  fn test_call_addr() {
+    let (mut mem, mut registers, mut screen) = deps();
+    let pc = registers.pc;
+    exec(call_addr(), 0x20F0, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.stack.len(), 1);
+    assert_eq!(registers.stack[0], pc);
+    assert_eq!(registers.pc, 0x0F0);
+    registers.stack = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+    exec_err(call_addr(), 0x20F0, &mut mem, &mut registers, &mut screen);
+  }
+
+  #[test]
+  fn test_se_vx_byte() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.pc = 0xFF0;
+    registers.set_v(0, 0xF0).unwrap();
+    exec(se_vx_byte(), 0x30F0, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.pc, 0xFF4);
+    registers.pc = 0xFF0;
+    registers.set_v(0, 0xFF).unwrap();
+    exec(se_vx_byte(), 0x30F0, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.pc, 0xFF2);
+  }
+
+  #[test]
+  fn test_sne_vx_byte() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.pc = 0xFF0;
+    registers.set_v(0, 0xF0).unwrap();
+    exec(sne_vx_byte(), 0x40F0, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.pc, 0xFF2);
+    registers.pc = 0xFF0;
+    registers.set_v(0, 0xFF).unwrap();
+    exec(sne_vx_byte(), 0x40F0, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.pc, 0xFF4);
+  }
+
+  #[test]
+  fn test_se_vx_vy() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.pc = 0xFF0;
+    registers.set_v(0, 0xF0).unwrap();
+    registers.set_v(1, 0xF0).unwrap();
+    exec(se_vx_vy(), 0x5010, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.pc, 0xFF4);
+    registers.pc = 0xFF0;
+    registers.set_v(0, 0xF0).unwrap();
+    registers.set_v(1, 0xF1).unwrap();
+    exec(se_vx_vy(), 0x5010, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.pc, 0xFF2);
+  }
+
+  #[test]
+  fn test_ld_vx_byte() {
+    let (mut mem, mut registers, mut screen) = deps();
+    exec(ld_vx_byte(), 0x60F0, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.get_v(0).unwrap(), 0xF0);
+  }
+
+  #[test]
+  fn test_add_vx_byte() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.set_v(0, 0x02).unwrap();
+    exec(add_vx_byte(), 0x7002, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.get_v(0).unwrap(), 0x04);
+  }
+
+  #[test]
+  fn test_ld_vx_vy() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.set_v(0, 0x01).unwrap();
+    registers.set_v(1, 0x02).unwrap();
+    exec(ld_vx_vy(), 0x8010, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.get_v(0).unwrap(), 0x02);
+  }
+  
+  #[test]
+  fn test_or_vx_vy() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.set_v(0, 0x3).unwrap();
+    registers.set_v(1, 0x4).unwrap();
+    exec(or_vx_vy(), 0x8011, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.get_v(0).unwrap(), 0x7);
+  }
+  
+  #[test]
+  fn test_and_vx_vy() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.set_v(0, 0x34).unwrap();
+    registers.set_v(1, 0xF0).unwrap();
+    exec(and_vx_vy(), 0x8012, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.get_v(0).unwrap(), 0x30);
+  }
+  
+  #[test]
+  fn test_xor_vx_vy() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.set_v(0, 0x3).unwrap();
+    registers.set_v(1, 0x3).unwrap();
+    exec(xor_vx_vy(), 0x8013, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.get_v(0).unwrap(), 0);
+  }
+  
+  #[test]
+  fn test_add_vx_vy() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.set_v(0, 0x3).unwrap();
+    registers.set_v(1, 0x4).unwrap();
+    exec(add_vx_vy(), 0x8014, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.get_v(0).unwrap(), 0x7);
+    assert_eq!(registers.get_vf(), 0);
+    registers.set_v(0, 0xFF).unwrap();
+    registers.set_v(1, 0xFF).unwrap();
+    exec(add_vx_vy(), 0x8014, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.get_v(0).unwrap(), 0xFE);
+    assert_eq!(registers.get_vf(), 1);
+  }
+  
+  #[test]
+  fn test_sub_vx_vy() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.set_v(0, 0x4).unwrap();
+    registers.set_v(1, 0x2).unwrap();
+    exec(sub_vx_vy(), 0x8015, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.get_v(0).unwrap(), 0x2);
+    assert_eq!(registers.get_vf(), 1);
+    registers.set_v(0, 0x2).unwrap();
+    registers.set_v(1, 0x3).unwrap();
+    exec(sub_vx_vy(), 0x8015, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.get_v(0).unwrap(), 0xFF);
+    assert_eq!(registers.get_vf(), 0);
+  }
+
+  #[test]
+  fn test_shr_vx() {  
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.set_v(0, 0x3).unwrap();
+    exec(shr_vx(), 0x8006, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.get_v(0).unwrap(), 1);
+    assert_eq!(registers.get_vf(), 1);
+  }
+  
+  #[test]
+  fn test_subn_vx_vy() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.set_v(0, 0x3).unwrap();
+    registers.set_v(1, 0x2).unwrap();
+    exec(subn_vx_vy(), 0x8017, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.get_v(0).unwrap(), 255);
+    assert_eq!(registers.get_vf(), 0);
+    registers.set_v(0, 0x2).unwrap();
+    registers.set_v(1, 0x3).unwrap();
+    exec(subn_vx_vy(), 0x8017, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.get_v(0).unwrap(), 1);
+    assert_eq!(registers.get_vf(), 1);
+  }
+
+  #[test]
+  fn test_shl_vx() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.set_v(0, 0x3).unwrap();
+    exec(shl_vx(), 0x800E, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.get_v(0).unwrap(), 6);
+    assert_eq!(registers.get_vf(), 0);
+  }
+
+  #[test]
+  fn test_sne_vx_vy() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.pc = 0xF0;
+    registers.set_v(0, 1).unwrap();
+    registers.set_v(1, 1).unwrap();
+    exec(sne_vx_vy(), 0x9010, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.pc, 0xF2);
+    registers.pc = 0xF0;
+    registers.set_v(0, 1).unwrap();
+    registers.set_v(1, 2).unwrap();
+    exec(sne_vx_vy(), 0x9010, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.pc, 0xF4);
+  }
+
+  #[test]
+  fn test_ld_i_addr() {
+    let (mut mem, mut registers, mut screen) = deps();
+    exec(ld_i_addr(), 0xAF00, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.i, 0xF00);
+  }
+
+  #[test]
+  fn test_jp_v0_addr() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.set_v(0, 0x010).unwrap();
+    exec(jp_v0_addr(), 0xB010, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.pc, 32);
   }
 }
