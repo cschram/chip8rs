@@ -16,17 +16,26 @@ use ggez::{
     Rect,
   },
 };
+use mockall::*;
+use mockall::predicate::*;
 
 fn px_index(x: u16, y: u16) -> usize {
   ((y * 64) + x) as usize
 }
 
-pub struct Display {
+#[automock]
+pub trait Chip8Screen {
+  fn clear(&mut self);
+  fn pixel(&self, x: u16, y: u16) -> bool;
+  fn set_pixel(&mut self, x: u16, y: u16, set: bool);
+}
+
+pub struct Screen {
   pub data: [bool; 2048],
   pixel_mesh: Mesh
 }
 
-impl Display {
+impl Screen {
   pub fn new(gfx: &impl Has<GraphicsContext>) -> Chip8Result<Self> {
     Ok(Self {
       data: [false; 2048],
@@ -38,21 +47,23 @@ impl Display {
       )?
     })
   }
+}
 
-  pub fn clear(&mut self) {
+impl Chip8Screen for Screen {
+  fn clear(&mut self) {
     self.data = [false; 2048];
   }
 
-  pub fn pixel(&self, x: u16, y: u16) -> bool {
+  fn pixel(&self, x: u16, y: u16) -> bool {
     self.data[px_index(x, y)]
   }
 
-  pub fn set_pixel(&mut self, x: u16, y: u16, set: bool) {
+  fn set_pixel(&mut self, x: u16, y: u16, set: bool) {
     self.data[px_index(x, y)] = set;
   }
 }
 
-impl Drawable for Display {
+impl Drawable for Screen {
   fn draw(&self, canvas: &mut Canvas, _param: impl Into<DrawParam>) {
     for x in 0..64 {
       for y in 0..32 {

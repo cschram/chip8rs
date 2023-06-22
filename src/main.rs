@@ -1,6 +1,6 @@
 mod button;
 mod cpu;
-mod display;
+mod screen;
 mod emulator;
 mod error;
 mod instructions;

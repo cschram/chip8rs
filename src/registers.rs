@@ -55,7 +55,7 @@ impl Registers {
     }
   }
 
-  pub fn get_vf(&self) -> u8 {
+  pub fn _get_vf(&self) -> u8 {
     self.v[15]
   }
 

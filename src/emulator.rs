@@ -1,9 +1,9 @@
-use std::{env, collections::HashMap};
+use std::env;
 
 use crate::{
   button::Button,
   cpu::Cpu,
-  display::Display,
+  screen::{Chip8Screen, Screen},
   error::Chip8Result,
   memory::Memory,
   theme,
@@ -54,7 +54,7 @@ pub fn screen_height() -> f32 {
 pub struct Emulator {
   cpu: Cpu,
   mem: Memory,
-  display: Display,
+  display: Screen,
   rom_loaded: bool,
   load_button: Button,
   reset_button: Button,
@@ -71,7 +71,7 @@ impl Emulator {
     Ok(Self {
       cpu: Cpu::default(),
       mem: Memory::default(),
-      display: Display::new(ctx)?,
+      display: Screen::new(ctx)?,
       rom_loaded: false,
       load_button: Button::new("load", 24.0, Vec2::ZERO, ctx)?,
       reset_button,
@@ -128,10 +128,12 @@ impl EventHandler<GameError> for Emulator {
     &mut self,
     _ctx: &mut Context,
     input: KeyInput,
-    _repeated: bool,
+    repeated: bool,
   ) -> GameResult {
-    if let Some(key) = KEYS.iter().position(|key| input.keycode.eq(&Some(*key))) {
-      self.cpu.keydown(key);
+    if !repeated {
+      if let Some(key) = KEYS.iter().position(|key| input.keycode.eq(&Some(*key))) {
+        self.cpu.keydown(key);
+      }
     }
     Ok(())
   }

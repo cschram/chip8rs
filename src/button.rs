@@ -59,7 +59,7 @@ impl Button {
     dim.w
   }
 
-  pub fn height(&self, gfx: &impl Has<GraphicsContext>) -> f32 {
+  pub fn _height(&self, gfx: &impl Has<GraphicsContext>) -> f32 {
     let dim = self.dimensions(gfx).unwrap();
     dim.h
   }
