@@ -614,9 +614,13 @@ fn ld_f_vx() -> Instruction {
     execute: |opcode, _mem, registers, _screen| {
       let x = ((opcode & 0x0F00) >> 8) as usize;
       let vx = registers.get_v(x)? as u16;
-      registers.i = FONT_OFFSET as u16 + (vx * 5);
-      registers.pc += 2;
-      Ok(())
+      if vx > 0xF {
+        Err(Chip8Error::InvalidKey(vx as usize))
+      } else {
+        registers.i = FONT_OFFSET as u16 + (vx * 5);
+        registers.pc += 2;
+        Ok(())
+      }
     }
   }
 }
@@ -631,8 +635,8 @@ fn ld_b_vx() -> Instruction {
       let x = ((opcode & 0x0F00) >> 8) as usize;
       let vx = registers.get_v(x)?;
       mem.write_byte(registers.i as usize, vx / 100)?;
-      mem.write_byte(registers.i as usize, (vx / 10) % 10)?;
-      mem.write_byte(registers.i as usize, (vx % 100) % 10)?;
+      mem.write_byte(registers.i as usize + 1, (vx / 10) % 10)?;
+      mem.write_byte(registers.i as usize + 2, (vx % 100) % 10)?;
       registers.pc += 2;
       Ok(())
     }
@@ -647,7 +651,7 @@ fn ld_arr_i_vx() -> Instruction {
     debug: false,
     execute: |opcode, mem, registers, _screen| {
       let x = (opcode & 0x0F00) >> 8;
-      for i in 0..x {
+      for i in 0..(x + 1) {
         mem.write_byte(
           (registers.i + i) as usize,
           registers.get_v(i as usize)?
@@ -667,7 +671,7 @@ fn ld_arr_vx_i() -> Instruction {
     debug: false,
     execute: |opcode, mem, registers, _screen| {
       let x = (opcode & 0x0F00) >> 8;
-      for i in 0..x {
+      for i in 0..(x + 1) {
         registers.set_v(
           i as usize,
           mem.read_byte((registers.i + i) as usize)?
@@ -985,14 +989,125 @@ mod tests {
     assert_eq!(registers.pc, 32);
   }
 
-  #[test]
-  fn test_drw_vx_vy_n() {
-    // TODO
-  }
+  // TODO: Test DRW Vx Vy N
+  // #[test]
+  // fn test_drw_vx_vy_n() {
+  // }
 
   #[test]
   fn test_skp_vx() {
     let (mut mem, mut registers, mut screen) = deps();
+    registers.pc = 0xF0;
+    registers.keys[4] = true;
+    registers.set_v(0, 4).unwrap();
     exec(skp_vx(), 0xE09E, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.pc, 0xF4);
+    registers.pc = 0xF0;
+    exec(skp_vx(), 0xE19E, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.pc, 0xF2);
+  }
+
+  #[test]
+  fn test_sknp_vx() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.pc = 0xF0;
+    registers.keys[4] = true;
+    registers.set_v(0, 4).unwrap();
+    exec(sknp_vx(), 0xE0A1, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.pc, 0xF2);
+    registers.pc = 0xF0;
+    exec(sknp_vx(), 0xE1A1, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.pc, 0xF4);
+  }
+
+  #[test]
+  fn test_ld_vx_dt() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.delay_timer = 10;
+    exec(ld_vx_dt(), 0xF407, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.get_v(4).unwrap(), 10);
+  }
+
+  #[test]
+  fn test_ld_vx_k() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.pc = 0xF0;
+    exec(ld_vx_k(), 0xF00A, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.get_v(0).unwrap(), 0);
+    assert_eq!(registers.pc, 0xF0);
+    registers.keys[4] = true;
+    exec(ld_vx_k(), 0xF00A, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.get_v(0).unwrap(), 4);
+    assert_eq!(registers.pc, 0xF2);
+  }
+
+  #[test]
+  fn test_ld_dt_vx() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.set_v(0, 4).unwrap();
+    exec(ld_dt_vx(), 0xF015, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.delay_timer, 4);
+  }
+
+  #[test]
+  fn test_ld_st_vx() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.set_v(0, 4).unwrap();
+    exec(ld_st_vx(), 0xF018, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.sound_timer, 4);
+  }
+
+  #[test]
+  fn test_add_i_vx() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.i = 5;
+    registers.set_v(2, 4).unwrap();
+    exec(add_i_vx(), 0xF21E, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.i, 9);
+  }
+
+  #[test]
+  fn test_ld_f_vx() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.set_v(0, 5).unwrap();
+    exec(ld_f_vx(), 0xF029, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.i, FONT_OFFSET as u16 + 25);
+    registers.set_v(0, 200).unwrap();
+    exec_err(ld_f_vx(), 0xF029, &mut mem, &mut registers, &mut screen);
+  }
+
+  #[test]
+  fn test_ld_b_vx() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.i = 0x300;
+    registers.set_v(0, 0x7B).unwrap();
+    exec(ld_b_vx(), 0xF033, &mut mem, &mut registers, &mut screen);
+    assert_eq!(mem.read_byte(0x300).unwrap(), 1);
+    assert_eq!(mem.read_byte(0x301).unwrap(), 2);
+    assert_eq!(mem.read_byte(0x302).unwrap(), 3);
+  }
+
+  #[test]
+  fn test_ld_arr_i_vx() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.i = 0x300;
+    registers.set_v(0, 1).unwrap();
+    registers.set_v(1, 2).unwrap();
+    registers.set_v(2, 3).unwrap();
+    exec(ld_arr_i_vx(), 0xF255, &mut mem, &mut registers, &mut screen);
+    assert_eq!(mem.read_byte(0x300).unwrap(), 1);
+    assert_eq!(mem.read_byte(0x301).unwrap(), 2);
+    assert_eq!(mem.read_byte(0x302).unwrap(), 3);
+  }
+
+  #[test]
+  fn test_ld_arr_vx_i() {
+    let (mut mem, mut registers, mut screen) = deps();
+    registers.i = 0x300;
+    mem.write(0x300, &[1, 2, 3]).unwrap();
+    exec(ld_arr_vx_i(), 0xF265, &mut mem, &mut registers, &mut screen);
+    assert_eq!(registers.get_v(0).unwrap(), 1);
+    assert_eq!(registers.get_v(1).unwrap(), 2);
+    assert_eq!(registers.get_v(2).unwrap(), 3);
   }
 }

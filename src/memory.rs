@@ -99,3 +99,27 @@ impl Memory {
     }
   }
 }
+
+#[cfg(test)]
+mod test {
+  use super::*;
+
+  #[test]
+  fn test_read_write() {
+    let mut mem = Memory::default();
+    assert!(mem.write(0xF00, &[1, 2, 3]).is_ok());
+    assert!(mem.write(0xFFF + 2, &[1, 2, 3]).is_err());
+    assert_eq!(mem.read(0xF00, 3).unwrap(), &[1, 2, 3]);
+    assert!(mem.write_byte(0xF00, 10).is_ok());
+    assert!(mem.write_byte(0xFFF + 2, 10).is_err());
+    assert_eq!(mem.read_byte(0xF00).unwrap(), 10);
+  }
+
+  #[test]
+  fn test_reset() {
+    let mut mem = Memory::default();
+    mem.write_byte(0xF00, 10).unwrap();
+    mem.reset();
+    assert_eq!(mem.read_byte(0xF00).unwrap(), 0);
+  }
+}
