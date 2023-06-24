@@ -51,7 +51,7 @@ impl Instruction {
 
 fn sys_addr() -> Instruction {
   Instruction {
-    name: "0nnn SYS addr".to_owned(),
+    name: "SYS addr".to_owned(),
     id: 0x0000,
     mask: 0xFFFF,
     debug: false,
@@ -64,9 +64,9 @@ fn sys_addr() -> Instruction {
 
 fn cls() -> Instruction  {
   Instruction {
-    name: "00E0 CLS".to_owned(),
+    name: "CLS".to_owned(),
     id: 0x00E0,
-    mask: 0x00FF,
+    mask: 0xFFFF,
     debug: false,
     execute: |_opcode, _mem, registers, screen| {
       screen.clear();
@@ -78,9 +78,9 @@ fn cls() -> Instruction  {
 
 fn ret() -> Instruction  {
   Instruction {
-    name: "00EE RET".to_owned(),
+    name: "RET".to_owned(),
     id: 0x00EE,
-    mask: 0x00FF,
+    mask: 0xFFFF,
     debug: false,
     execute: |_opcode, _mem, registers, _screen| {
       registers.pc = registers.pop()? + 2;
@@ -91,7 +91,7 @@ fn ret() -> Instruction  {
 
 fn jp_addr() -> Instruction  {
   Instruction {
-    name: "1nnn JP addr".to_owned(),
+    name: "JP addr".to_owned(),
     id: 0x1000,
     mask: 0xF000,
     debug: false,
@@ -105,7 +105,7 @@ fn jp_addr() -> Instruction  {
 
 fn call_addr() -> Instruction  {
   Instruction {
-    name: "2nnn CALL addr".to_owned(),
+    name: "CALL addr".to_owned(),
     id: 0x2000,
     mask: 0xF000,
     debug: false,
@@ -120,7 +120,7 @@ fn call_addr() -> Instruction  {
 
 fn se_vx_byte() -> Instruction  {
   Instruction {
-    name: "3xnn SE Vx, byte".to_owned(),
+    name: "SE Vx, byte".to_owned(),
     id: 0x3000,
     mask: 0xF000,
     debug: false,
@@ -140,7 +140,7 @@ fn se_vx_byte() -> Instruction  {
 
 fn sne_vx_byte() -> Instruction  {
   Instruction {
-    name: "4xnn SNE Vx, byte".to_owned(),
+    name: "SNE Vx, byte".to_owned(),
     id: 0x4000,
     mask: 0xF000,
     debug: false,
@@ -160,7 +160,7 @@ fn sne_vx_byte() -> Instruction  {
 
 fn se_vx_vy() -> Instruction  {
   Instruction {
-    name: "5xy0 SE Vx, Vy".to_owned(),
+    name: "SE Vx, Vy".to_owned(),
     id: 0x5000,
     mask: 0xF00F,
     debug: false,
@@ -179,7 +179,7 @@ fn se_vx_vy() -> Instruction  {
 
 fn ld_vx_byte() -> Instruction  {
   Instruction {
-    name: "6xnn LD Vx, byte".to_owned(),
+    name: "LD Vx, byte".to_owned(),
     id: 0x6000,
     mask: 0xF000,
     debug: false,
@@ -195,7 +195,7 @@ fn ld_vx_byte() -> Instruction  {
 
 fn add_vx_byte() -> Instruction  {
   Instruction {
-    name: "7xnn ADD Vx, byte".to_owned(),
+    name: "ADD Vx, byte".to_owned(),
     id: 0x7000,
     mask: 0xF000,
     debug: false,
@@ -212,7 +212,7 @@ fn add_vx_byte() -> Instruction  {
 
 fn ld_vx_vy() -> Instruction  {
   Instruction {
-    name: "8xy0 LD Vx, Vy".to_owned(),
+    name: "LD Vx, Vy".to_owned(),
     id: 0x8000,
     mask: 0xF00F,
     debug: false,
@@ -228,7 +228,7 @@ fn ld_vx_vy() -> Instruction  {
 
 fn or_vx_vy() -> Instruction  {
   Instruction {
-    name: "8xy1 OR Vx, Vy".to_owned(),
+    name: "OR Vx, Vy".to_owned(),
     id: 0x8001,
     mask: 0xF00F,
     debug: false,
@@ -246,7 +246,7 @@ fn or_vx_vy() -> Instruction  {
 
 fn and_vx_vy() -> Instruction  {
   Instruction {
-    name: "8xy2 AND Vx, Vy".to_owned(),
+    name: "AND Vx, Vy".to_owned(),
     id: 0x8002,
     mask: 0xF00F,
     debug: false,
@@ -264,7 +264,7 @@ fn and_vx_vy() -> Instruction  {
 
 fn xor_vx_vy() -> Instruction {
   Instruction {
-    name: "8xy3 XOR Vx, Vy".to_owned(),
+    name: "XOR Vx, Vy".to_owned(),
     id: 0x8003,
     mask: 0xF00F,
     debug: false,
@@ -282,7 +282,7 @@ fn xor_vx_vy() -> Instruction {
 
 fn add_vx_vy() -> Instruction {
   Instruction {
-    name: "8xy4 ADD Vx, Vy".to_owned(),
+    name: "ADD Vx, Vy".to_owned(),
     id: 0x8004,
     mask: 0xF00F,
     debug: false,
@@ -302,7 +302,7 @@ fn add_vx_vy() -> Instruction {
 
 fn sub_vx_vy() -> Instruction {
   Instruction {
-    name: "8xy5 SUB Vx, Vy".to_owned(),
+    name: "SUB Vx, Vy".to_owned(),
     id: 0x8005,
     mask: 0xF00F,
     debug: false,
@@ -326,7 +326,7 @@ fn sub_vx_vy() -> Instruction {
 
 fn shr_vx() -> Instruction {
   Instruction {
-    name: "8x06 SHR Vx".to_owned(),
+    name: "SHR Vx".to_owned(),
     id: 0x8006,
     mask: 0xF00F,
     debug: false,
@@ -343,7 +343,7 @@ fn shr_vx() -> Instruction {
 
 fn subn_vx_vy() -> Instruction {
   Instruction {
-    name: "8xy7 SUBN Vx, Vy".to_owned(),
+    name: "SUBN Vx, Vy".to_owned(),
     id: 0x8007,
     mask: 0xF00F,
     debug: false,
@@ -367,7 +367,7 @@ fn subn_vx_vy() -> Instruction {
 
 fn shl_vx() -> Instruction {
   Instruction {
-    name: "8x0E SHL Vx".to_owned(),
+    name: "SHL Vx".to_owned(),
     id: 0x800E,
     mask: 0xF00F,
     debug: false,
@@ -384,7 +384,7 @@ fn shl_vx() -> Instruction {
 
 fn sne_vx_vy() -> Instruction {
   Instruction {
-    name: "9xy0 SNE Vx, Vy".to_owned(),
+    name: "SNE Vx, Vy".to_owned(),
     id: 0x9000,
     mask: 0xF00F,
     debug: false,
@@ -405,7 +405,7 @@ fn sne_vx_vy() -> Instruction {
 
 fn ld_i_addr() -> Instruction {
   Instruction {
-    name: "Annn LD I, addr".to_owned(),
+    name: "LD I, addr".to_owned(),
     id: 0xA000,
     mask: 0xF000,
     debug: false,
@@ -420,7 +420,7 @@ fn ld_i_addr() -> Instruction {
 
 fn jp_v0_addr() -> Instruction {
   Instruction {
-    name: "Bnnn JP V0, addr".to_owned(),
+    name: "JP V0, addr".to_owned(),
     id: 0xB000,
     mask: 0xF000,
     debug: false,
@@ -435,7 +435,7 @@ fn jp_v0_addr() -> Instruction {
 
 fn rnd_vx_vyte() -> Instruction {
   Instruction {
-    name: "Cxnn RND Vx, byte".to_owned(),
+    name: "RND Vx, byte".to_owned(),
     id: 0xC000,
     mask: 0xF000,
     debug: false,
@@ -452,7 +452,7 @@ fn rnd_vx_vyte() -> Instruction {
 
 fn drw_vx_vy_nibble() -> Instruction {
   Instruction {
-    name: "Dxyn DRW Vx, Vy, nibble".to_owned(),
+    name: "DRW Vx, Vy, nibble".to_owned(),
     id: 0xD000,
     mask: 0xF000,
     debug: false,
@@ -492,7 +492,7 @@ fn drw_vx_vy_nibble() -> Instruction {
 
 fn skp_vx() -> Instruction {
   Instruction {
-    name: "Ex9E SKP Vx".to_owned(),
+    name: "SKP Vx".to_owned(),
     id: 0xE09E,
     mask: 0xF0FF,
     debug: false,
@@ -511,7 +511,7 @@ fn skp_vx() -> Instruction {
 
 fn sknp_vx() -> Instruction {
   Instruction {
-    name: "ExA1 SKNP Vx".to_owned(),
+    name: "SKNP Vx".to_owned(),
     id: 0xE0A1,
     mask: 0xF0FF,
     debug: false,
@@ -530,7 +530,7 @@ fn sknp_vx() -> Instruction {
 
 fn ld_vx_dt() -> Instruction {
   Instruction {
-    name: "Fx07 LD Vx, DT".to_owned(),
+    name: "LD Vx, DT".to_owned(),
     id: 0xF007,
     mask: 0xF0FF,
     debug: false,
@@ -545,7 +545,7 @@ fn ld_vx_dt() -> Instruction {
 
 fn ld_vx_k() -> Instruction {
   Instruction {
-    name: "Fx0A LD Vx, K".to_owned(),
+    name: "LD Vx, K".to_owned(),
     id: 0xF00A,
     mask: 0xF0FF,
     debug: false,
@@ -562,7 +562,7 @@ fn ld_vx_k() -> Instruction {
 
 fn ld_dt_vx() -> Instruction {
   Instruction {
-    name: "Fx15 LD DT, Vx".to_owned(),
+    name: "LD DT, Vx".to_owned(),
     id: 0xF015,
     mask: 0xF0FF,
     debug: false,
@@ -577,7 +577,7 @@ fn ld_dt_vx() -> Instruction {
 
 fn ld_st_vx() -> Instruction {
   Instruction {
-    name: "Fx18 LD ST, Vx".to_owned(),
+    name: "LD ST, Vx".to_owned(),
     id: 0xF018,
     mask: 0xF0FF,
     debug: false,
@@ -592,7 +592,7 @@ fn ld_st_vx() -> Instruction {
 
 fn add_i_vx() -> Instruction {
   Instruction {
-    name: "Fx1E ADD I, Vx".to_owned(),
+    name: "ADD I, Vx".to_owned(),
     id: 0xF01E,
     mask: 0xF0FF,
     debug: false,
@@ -607,7 +607,7 @@ fn add_i_vx() -> Instruction {
 
 fn ld_f_vx() -> Instruction {
   Instruction {
-    name: "Fx29 LD F, Vx".to_owned(),
+    name: "LD F, Vx".to_owned(),
     id: 0xF029,
     mask: 0xF0FF,
     debug: false,
@@ -627,7 +627,7 @@ fn ld_f_vx() -> Instruction {
 
 fn ld_b_vx() -> Instruction {
   Instruction {
-    name: "Fx33 LD B, Vx".to_owned(),
+    name: "LD B, Vx".to_owned(),
     id: 0xF033,
     mask: 0xF0FF,
     debug: false,
@@ -645,7 +645,7 @@ fn ld_b_vx() -> Instruction {
 
 fn ld_arr_i_vx() -> Instruction {
   Instruction {
-    name: "Fx55 LD [I], Vx".to_owned(),
+    name: "LD [I], Vx".to_owned(),
     id: 0xF055,
     mask: 0xF0FF,
     debug: false,
@@ -665,7 +665,7 @@ fn ld_arr_i_vx() -> Instruction {
 
 fn ld_arr_vx_i() -> Instruction {
   Instruction {
-    name: "Fx65 LD Vx, [I]".to_owned(),
+    name: "LD Vx, [I]".to_owned(),
     id: 0xF065,
     mask: 0xF0FF,
     debug: false,
@@ -764,6 +764,147 @@ mod tests {
         screen,
       ).is_err()
     );
+  }
+
+  #[test]
+  fn test_decode() {
+    let instructions = get_instructions();
+
+    let cls = Instruction::decode(0x00E0, &instructions);
+    assert!(cls.is_some());
+    assert_eq!(cls.unwrap().name, "CLS");
+
+    let ret = Instruction::decode(0x00EE, &instructions);
+    assert!(ret.is_some());
+    assert_eq!(ret.unwrap().name, "RET");
+
+    let jp_addr = Instruction::decode(0x1AAA, &instructions);
+    assert!(jp_addr.is_some());
+    assert_eq!(jp_addr.unwrap().name, "JP addr");
+
+    let call_addr = Instruction::decode(0x2AAA, &instructions);
+    assert!(call_addr.is_some());
+    assert_eq!(call_addr.unwrap().name, "CALL addr");
+
+    let se_vx_byte = Instruction::decode(0x3AAA, &instructions);
+    assert!(se_vx_byte.is_some());
+    assert_eq!(se_vx_byte.unwrap().name, "SE Vx, byte");
+
+    let sne_vx_byte = Instruction::decode(0x4AAA, &instructions);
+    assert!(sne_vx_byte.is_some());
+    assert_eq!(sne_vx_byte.unwrap().name, "SNE Vx, byte");
+
+    let se_vx_vy = Instruction::decode(0x5AB0, &instructions);
+    assert!(se_vx_vy.is_some());
+    assert_eq!(se_vx_vy.unwrap().name, "SE Vx, Vy");
+
+    let ld_vx_byte = Instruction::decode(0x6AAA, &instructions);
+    assert!(ld_vx_byte.is_some());
+    assert_eq!(ld_vx_byte.unwrap().name, "LD Vx, byte");
+
+    let add_vx_byte = Instruction::decode(0x7AAA, &instructions);
+    assert!(add_vx_byte.is_some());
+    assert_eq!(add_vx_byte.unwrap().name, "ADD Vx, byte");
+
+    let ld_vx_vy = Instruction::decode(0x8AB0, &instructions);
+    assert!(ld_vx_vy.is_some());
+    assert_eq!(ld_vx_vy.unwrap().name, "LD Vx, Vy");
+
+    let or_vx_vy = Instruction::decode(0x8AB1, &instructions);
+    assert!(or_vx_vy.is_some());
+    assert_eq!(or_vx_vy.unwrap().name, "OR Vx, Vy");
+
+    let and_vx_vy = Instruction::decode(0x8AB2, &instructions);
+    assert!(and_vx_vy.is_some());
+    assert_eq!(and_vx_vy.unwrap().name, "AND Vx, Vy");
+
+    let xor_vx_vy = Instruction::decode(0x8AB3, &instructions);
+    assert!(xor_vx_vy.is_some());
+    assert_eq!(xor_vx_vy.unwrap().name, "XOR Vx, Vy");
+
+    let add_vx_vy = Instruction::decode(0x8AB4, &instructions);
+    assert!(add_vx_vy.is_some());
+    assert_eq!(add_vx_vy.unwrap().name, "ADD Vx, Vy");
+
+    let sub_vx_vy = Instruction::decode(0x8AB5, &instructions);
+    assert!(sub_vx_vy.is_some());
+    assert_eq!(sub_vx_vy.unwrap().name, "SUB Vx, Vy");
+
+    let shr_vx = Instruction::decode(0x8AB6, &instructions);
+    assert!(shr_vx.is_some());
+    assert_eq!(shr_vx.unwrap().name, "SHR Vx");
+
+    let subn_vx_vy = Instruction::decode(0x8AB7, &instructions);
+    assert!(subn_vx_vy.is_some());
+    assert_eq!(subn_vx_vy.unwrap().name, "SUBN Vx, Vy");
+
+    let shl_vx = Instruction::decode(0x8ABE, &instructions);
+    assert!(shl_vx.is_some());
+    assert_eq!(shl_vx.unwrap().name, "SHL Vx");
+
+    let sne_vx_vy = Instruction::decode(0x9AB0, &instructions);
+    assert!(sne_vx_vy.is_some());
+    assert_eq!(sne_vx_vy.unwrap().name, "SNE Vx, Vy");
+
+    let ld_i_addr = Instruction::decode(0xAEEE, &instructions);
+    assert!(ld_i_addr.is_some());
+    assert_eq!(ld_i_addr.unwrap().name, "LD I, addr");
+
+    let jp_v0_addr = Instruction::decode(0xBEEE, &instructions);
+    assert!(jp_v0_addr.is_some());
+    assert_eq!(jp_v0_addr.unwrap().name, "JP V0, addr");
+
+    let rnd_vx_byte = Instruction::decode(0xCAEE, &instructions);
+    assert!(rnd_vx_byte.is_some());
+    assert_eq!(rnd_vx_byte.unwrap().name, "RND Vx, byte");
+
+    let drw_vx_vy_n = Instruction::decode(0xDABC, &instructions);
+    assert!(drw_vx_vy_n.is_some());
+    assert_eq!(drw_vx_vy_n.unwrap().name, "DRW Vx, Vy, nibble");
+
+    let skp_vx = Instruction::decode(0xEA9E, &instructions);
+    assert!(skp_vx.is_some());
+    assert_eq!(skp_vx.unwrap().name, "SKP Vx");
+
+    let sknp_vx = Instruction::decode(0xEAA1, &instructions);
+    assert!(sknp_vx.is_some());
+    assert_eq!(sknp_vx.unwrap().name, "SKNP Vx");
+
+    let ld_vx_dt = Instruction::decode(0xFA07, &instructions);
+    assert!(ld_vx_dt.is_some());
+    assert_eq!(ld_vx_dt.unwrap().name, "LD Vx, DT");
+
+    let ld_vx_k = Instruction::decode(0xFA0A, &instructions);
+    assert!(ld_vx_k.is_some());
+    assert_eq!(ld_vx_k.unwrap().name, "LD Vx, K");
+
+    let ld_dt_vx = Instruction::decode(0xFA15, &instructions);
+    assert!(ld_dt_vx.is_some());
+    assert_eq!(ld_dt_vx.unwrap().name, "LD DT, Vx");
+
+    let ld_st_vx = Instruction::decode(0xFA18, &instructions);
+    assert!(ld_st_vx.is_some());
+    assert_eq!(ld_st_vx.unwrap().name, "LD ST, Vx");
+
+    let add_i_vx = Instruction::decode(0xFA1E, &instructions);
+    assert!(add_i_vx.is_some());
+    assert_eq!(add_i_vx.unwrap().name, "ADD I, Vx");
+
+    let ld_f_vx = Instruction::decode(0xFA29, &instructions);
+    assert!(ld_f_vx.is_some());
+    assert_eq!(ld_f_vx.unwrap().name, "LD F, Vx");
+
+    let ld_b_vx = Instruction::decode(0xFA33, &instructions);
+    assert!(ld_b_vx.is_some());
+    assert_eq!(ld_b_vx.unwrap().name, "LD B, Vx");
+
+    let ld_arr_i_vx = Instruction::decode(0xFA55, &instructions);
+    assert!(ld_arr_i_vx.is_some());
+    assert_eq!(ld_arr_i_vx.unwrap().name, "LD [I], Vx");
+
+    let ld_arr_vx_i = Instruction::decode(0xFA65, &instructions);
+    assert!(ld_arr_vx_i.is_some());
+    assert_eq!(ld_arr_vx_i.unwrap().name, "LD Vx, [I]");
   }
 
   #[test]
