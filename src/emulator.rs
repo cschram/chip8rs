@@ -16,7 +16,7 @@ use ggez::{
   event::{EventHandler, MouseButton},
   graphics::{Canvas, DrawParam},
   input::keyboard::KeyInput,
-  glam::Vec2, winit::event::VirtualKeyCode,
+  glam::Vec2,
 };
 use native_dialog::FileDialog;
 
@@ -24,23 +24,23 @@ const TARGET_FPS: u32 = 60;
 
 pub const DISPLAY_SCALE: f32 = 10.0;
 
-pub const KEYS: [VirtualKeyCode; 16] = [
-  VirtualKeyCode::Key1,
-  VirtualKeyCode::Key2,
-  VirtualKeyCode::Key3,
-  VirtualKeyCode::Key4,
-  VirtualKeyCode::Q,
-  VirtualKeyCode::W,
-  VirtualKeyCode::E,
-  VirtualKeyCode::R,
-  VirtualKeyCode::A,
-  VirtualKeyCode::S,
-  VirtualKeyCode::D,
-  VirtualKeyCode::F,
-  VirtualKeyCode::Z,
-  VirtualKeyCode::X,
-  VirtualKeyCode::C,
-  VirtualKeyCode::V,
+pub const KEYS: [u32; 16] = [
+  7,  // x
+  18, // 1
+  19, // 2
+  20, // 3
+  12, // q
+  13, // w
+  14, // e
+  0,  // a
+  1,  // s
+  2,  // d
+  6,  // z
+  8,  // c
+  21, // 4
+  15, // r
+  3,  // f
+  9,  // v
 ];
 
 pub fn screen_width() -> f32 {
@@ -86,6 +86,7 @@ impl Emulator {
       .show_open_single_file()
       .unwrap();
     if let Some(path) = path {
+      self.reset();
       match self.mem.load_rom(&path) {
         Ok(_) => {
           self.rom_loaded = true;
@@ -131,7 +132,7 @@ impl EventHandler<GameError> for Emulator {
     repeated: bool,
   ) -> GameResult {
     if !repeated {
-      if let Some(key) = KEYS.iter().position(|key| input.keycode.eq(&Some(*key))) {
+      if let Some(key) = KEYS.iter().position(|key| input.scancode.eq(key)) {
         self.cpu.keydown(key);
       }
     }
@@ -139,7 +140,7 @@ impl EventHandler<GameError> for Emulator {
   }
 
   fn key_up_event(&mut self, _ctx: &mut Context, input: KeyInput) -> GameResult {
-    if let Some(key) = KEYS.iter().position(|key| input.keycode.eq(&Some(*key))) {
+    if let Some(key) = KEYS.iter().position(|key| input.scancode.eq(key)) {
       self.cpu.keyup(key);
     }
     Ok(())

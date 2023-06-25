@@ -27,7 +27,7 @@ impl Instruction {
     let pc = registers.pc as usize;
 
     let opbytes = mem.read(pc, 2)?;
-    let opcode = (opbytes[0] as u16) << 8 | (opbytes[1] as u16);
+    let opcode = ((opbytes[0] as u16) << 8) | ((opbytes[1] as u16) << 0);
 
     match Instruction::decode(opcode, instructions) {
       Some(instr) => {
