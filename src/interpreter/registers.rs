@@ -1,6 +1,4 @@
-use crate::error::*;
-
-use rand::prelude::*;
+use super::error::*;
 
 const MAX_STACK: usize = 16;
 
@@ -10,10 +8,8 @@ pub struct Registers {
   pub stack: Vec<u16>,
   pub v: [u8; 16],
   pub keys: [bool; 16],
-  pub delay_timer: u8,
-  pub sound_timer: u8,
-  // I don't know where else to put this, so...
-  pub rng: ThreadRng,
+  pub delay_timer: f32,
+  pub sound_timer: f32,
 }
 
 impl Default for Registers {
@@ -24,39 +20,38 @@ impl Default for Registers {
         stack: Vec::new(),
         v: [0; 16],
         keys: [false; 16],
-        delay_timer: 0,
-        sound_timer: 0,
-        rng: thread_rng(),
+        delay_timer: 0.0,
+        sound_timer: 0.0,
       }
   }
 }
 
 impl Registers {
-  pub fn push(&mut self, addr: u16) -> Chip8Result {
+  pub fn push(&mut self, addr: u16) -> Result<(), InterpreterError> {
     if self.stack.len() < MAX_STACK {
       self.stack.push(addr);
       Ok(())
     } else {
       println!("{:?}", self.stack);
-      Err(Chip8Error::StackOverflow)
+      Err(InterpreterError::StackOverflow)
     }
   }
 
-  pub fn pop(&mut self) -> Chip8Result<u16> {
-    self.stack.pop().ok_or(Chip8Error::StackUnderflow)
+  pub fn pop(&mut self) -> Result<u16, InterpreterError> {
+    self.stack.pop().ok_or(InterpreterError::StackUnderflow)
   }
 
-  pub fn get_v(&self, index: usize) -> Chip8Result<u8> {
+  pub fn get_v(&self, index: usize) -> Result<u8, InterpreterError> {
     if index > 15 {
-      Err(Chip8Error::InvalidRegister(index))
+      Err(InterpreterError::InvalidRegister(index))
     } else {
       Ok(self.v[index])
     }
   }
 
-  pub fn set_v(&mut self, index: usize, value: u8) -> Chip8Result {
+  pub fn set_v(&mut self, index: usize, value: u8) -> Result<(), InterpreterError> {
     if index > 15 {
-      Err(Chip8Error::InvalidRegister(index))
+      Err(InterpreterError::InvalidRegister(index))
     } else {
       self.v[index] = value;
       Ok(())
@@ -72,9 +67,25 @@ impl Registers {
     self.v[15] = value;
   }
 
-  pub fn keydown(&self, index: usize) -> Chip8Result<bool> {
+  pub fn get_dt(&self) -> u8 {
+    self.delay_timer as u8
+  }
+
+  pub fn set_dt(&mut self, value: u8) {
+    self.delay_timer = value as f32;
+  }
+
+  pub fn get_st(&self) -> u8 {
+    self.sound_timer as u8
+  }
+
+  pub fn set_st(&mut self, value: u8) {
+    self.sound_timer = value as f32;
+  }
+
+  pub fn keydown(&self, index: usize) -> Result<bool, InterpreterError> {
     if index > 15 {
-      Err(Chip8Error::InvalidKey(index))
+      Err(InterpreterError::InvalidKey(index))
     } else {
       Ok(self.keys[index])
     }

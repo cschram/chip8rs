@@ -1,35 +1,10 @@
+use crate::interpreter::InterpreterError;
 use thiserror::Error;
 
-// TODO: Implement PartialEq
 #[derive(Error, Debug)]
 pub enum Chip8Error {
-  #[error("Engine Error: {0}")]
-  EngineError(#[from] ggez::GameError),
-  #[error("IO Error: {0}")]
-  IOError(#[from] std::io::Error),
-  #[error("Error executing instruction {:#06x}: {}", .0, .1)]
-  ExecutionError(u16, String),
-  #[error("Invalid address {:#06x}", .0)]
-  InvalidAddressError(usize),
-  #[error("Invalid instruction {:#06x} at address {:#06x}", .1, .0)]
-  InvalidInstructionError(usize, u16),
-  #[error("Invalid register address {0}")]
-  InvalidRegister(usize),
-  #[error("Invalid key {0}")]
-  InvalidKey(usize),
-  #[error("Stack overflow")]
-  StackOverflow,
-  #[error("Stack underflow")]
-  StackUnderflow,
+  #[error("Pixels Error: {0}")]
+  PixelsError(#[from] pixels::Error),
+  #[error("Interpreter Error: {0}")]
+  InterpreterError(#[from] InterpreterError),
 }
-
-impl Into<ggez::GameError> for Chip8Error {
-  fn into(self) -> ggez::GameError {
-    match self {
-      Chip8Error::EngineError(err) => err,
-      _ => ggez::GameError::CustomError(self.to_string())
-    }
-  }
-}
-
-pub type Chip8Result<T = ()> = Result<T, Chip8Error>;

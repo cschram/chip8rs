@@ -1,13 +1,8 @@
-use std::io::{Read, BufReader};
-use std::fs::File;
-use std::path::PathBuf;
-
-use crate::error::*;
+use super::error::*;
 
 const MEMORY_SIZE: usize = 4096;
 const ROM_OFFSET: usize = 512;
 pub const FONT_OFFSET: usize = 80;
-
 const CHIP8_FONT: [u8; 80] = [
   0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
   0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -33,40 +28,37 @@ pub struct Memory {
 
 impl Default for Memory {
   fn default() -> Self {
-    let mut m = Self {
-      mem: [0; MEMORY_SIZE],
-    };
-    m.load_font();
-    m
+    let mut mem = [0; MEMORY_SIZE];
+    for i in 0..CHIP8_FONT.len() {
+      mem[i + FONT_OFFSET] = CHIP8_FONT[i];
+    }
+    Self {
+      mem,
+    }
   }
 }
 
 impl Memory {
-  pub fn reset(&mut self) {
-    self.mem = [0; 4096];
-    self.load_font();
-  }
-
-  pub fn read(&self, addr: usize, len: usize) -> Chip8Result<&[u8]> {
+  pub fn read(&self, addr: usize, len: usize) -> Result<&[u8], InterpreterError> {
     let end = addr + len;
     if end < MEMORY_SIZE {
       Ok(&self.mem[addr..end])
     } else {
-      Err(Chip8Error::InvalidAddressError(addr))
+      Err(InterpreterError::InvalidAddressError(addr))
     }
   }
 
-  pub fn read_byte(&self, addr: usize) -> Chip8Result<u8> {
+  pub fn read_byte(&self, addr: usize) -> Result<u8, InterpreterError> {
     if addr < MEMORY_SIZE {
       Ok(self.mem[addr])
     } else {
-      Err(Chip8Error::InvalidAddressError(addr))
+      Err(InterpreterError::InvalidAddressError(addr))
     }
   }
 
-  pub fn write(&mut self, addr: usize, data: &[u8]) -> Chip8Result {
+  pub fn write(&mut self, addr: usize, data: &[u8]) -> Result<(), InterpreterError> {
     if addr + data.len() >= 4096 {
-      Err(Chip8Error::InvalidAddressError(addr))
+      Err(InterpreterError::InvalidAddressError(addr))
     } else {
       for i in 0..data.len() {
         self.mem[addr + i] = data[i];
@@ -75,28 +67,18 @@ impl Memory {
     }
   }
 
-  pub fn write_byte(&mut self, addr: usize, byte: u8) -> Chip8Result {
+  pub fn write_byte(&mut self, addr: usize, byte: u8) -> Result<(), InterpreterError> {
     if addr >= 4096 {
-      Err(Chip8Error::InvalidAddressError(addr))
+      Err(InterpreterError::InvalidAddressError(addr))
     } else {
       self.mem[addr] = byte;
       Ok(())
     }
   }
 
-  pub fn load_rom(&mut self, path: &PathBuf) -> Chip8Result {
-    let f = File::open(path)?;
-    let mut reader = BufReader::new(f);
-    let mut buffer = Vec::<u8>::new();
-    reader.read_to_end(&mut buffer)?;
-    self.write(ROM_OFFSET, &buffer)?;
+  pub fn load_rom(&mut self, rom: &[u8]) -> Result<(), InterpreterError> {
+    self.write(ROM_OFFSET, rom)?;
     Ok(())
-  }
-
-  fn load_font(&mut self) {
-    for i in 0..CHIP8_FONT.len() {
-      self.mem[i + FONT_OFFSET] = CHIP8_FONT[i];
-    }
   }
 }
 
@@ -113,13 +95,5 @@ mod test {
     assert!(mem.write_byte(0xF00, 10).is_ok());
     assert!(mem.write_byte(0xFFF + 2, 10).is_err());
     assert_eq!(mem.read_byte(0xF00).unwrap(), 10);
-  }
-
-  #[test]
-  fn test_reset() {
-    let mut mem = Memory::default();
-    mem.write_byte(0xF00, 10).unwrap();
-    mem.reset();
-    assert_eq!(mem.read_byte(0xF00).unwrap(), 0);
   }
 }
