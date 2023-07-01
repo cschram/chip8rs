@@ -2,6 +2,25 @@ use super::error::*;
 
 const MAX_STACK: usize = 16;
 
+pub enum Chip8Key {
+  X,
+  ONE,
+  TWO,
+  THREE,
+  Q,
+  W,
+  E,
+  A,
+  S,
+  D,
+  Z,
+  C,
+  FOUR,
+  R,
+  F,
+  V,
+}
+
 pub struct Registers {
   pub pc: u16,
   pub i: u16,
