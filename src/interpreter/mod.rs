@@ -1,11 +1,13 @@
 pub mod error;
 mod frame_buffer;
+mod instructions;
 mod memory;
 mod registers;
 
 pub use self::error::*;
 use self::{
   frame_buffer::*,
+  instructions::*,
   memory::*,
   registers::*,
 };
@@ -15,6 +17,7 @@ pub struct Chip8 {
   memory: Memory,
   registers: Registers,
   frame_buffer: FrameBuffer,
+  instructions: InstructionSet,
   rom: Option<Vec<u8>>,
   rng: ThreadRng,
 }
@@ -24,6 +27,7 @@ impl Default for Chip8 {
     Self {
       memory: Memory::default(),
       registers: Registers::default(),
+      instructions: InstructionSet::default(),
       frame_buffer: FrameBuffer::default(),
       rom: None,
       rng: thread_rng(),

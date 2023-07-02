@@ -5,22 +5,18 @@ pub const SCREEN_WIDTH: f32 = 64.0 * DISPLAY_SCALE;
 pub const SCREEN_HEIGHT: f32 = 32.0 * DISPLAY_SCALE;
 const BUFFER_SIZE: usize = 2048;
 
-pub struct FrameBuffer {
-  buffer: [u8; BUFFER_SIZE],
-}
+pub struct FrameBuffer([u8; BUFFER_SIZE]);
 
 impl Default for FrameBuffer {
   fn default() -> Self {
-    Self {
-      buffer: [0; BUFFER_SIZE],
-    }
+    Self([0; BUFFER_SIZE])
   }
 }
 
 impl FrameBuffer {
   pub fn get_i(&self, index: u16) -> Result<bool, InterpreterError> {
     if (index as usize) < BUFFER_SIZE {
-      Ok(self.buffer[index as usize] == 1)
+      Ok(self.0[index as usize] == 1)
     } else {
       Err(InterpreterError::InvalidFrameBufferIndex(index))
     }
@@ -28,7 +24,7 @@ impl FrameBuffer {
 
   pub fn set_i(&mut self, index: u16, value: bool) -> Result<(), InterpreterError> {
     if (index as usize) < BUFFER_SIZE {
-      self.buffer[index as usize] = if value { 1 } else { 0 };
+      self.0[index as usize] = if value { 1 } else { 0 };
       Ok(())
     } else {
       Err(InterpreterError::InvalidFrameBufferIndex(index))
@@ -44,6 +40,10 @@ impl FrameBuffer {
   }
 
   pub fn frame(&self) ->  &[u8] {
-    &self.buffer
+    &self.0
+  }
+
+  pub fn clear(&mut self) {
+    self.0 = [0; BUFFER_SIZE];
   }
 }
