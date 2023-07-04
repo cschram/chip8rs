@@ -518,11 +518,11 @@ fn drw_vx_vy_nibble() -> Instruction {
             if px < 64 && (byte & (0x80 >> xi)) != 0 {
               // Flip pixel if sprite bit is set
               if frame_buffer.get_xy(px, py)? {
-                frame_buffer.set_xy(px, py, false);
+                frame_buffer.set_xy(px, py, false)?;
                 // Set the VF register if a pixel is unset
                 registers.v[15] = 1;
               } else {
-                frame_buffer.set_xy(px, py, true);
+                frame_buffer.set_xy(px, py, true)?;
               }
             }
           }

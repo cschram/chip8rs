@@ -21,7 +21,6 @@ pub struct Chip8 {
   registers: Registers,
   frame_buffer: FrameBuffer,
   instructions: InstructionSet,
-  rom: Option<Vec<u8>>,
   rng: ThreadRng,
 }
 
@@ -32,7 +31,6 @@ impl Default for Chip8 {
       registers: Registers::default(),
       instructions: InstructionSet::default(),
       frame_buffer: FrameBuffer::default(),
-      rom: None,
       rng: thread_rng(),
     }
   }
@@ -53,7 +51,6 @@ impl Chip8 {
 
   pub fn load_rom(&mut self, rom: &[u8]) -> InterpretterResult {
     self.memory.load_rom(&rom)?;
-    self.rom = Some(Vec::from(rom));
     Ok(())
   }
 
