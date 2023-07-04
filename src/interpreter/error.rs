@@ -18,3 +18,5 @@ pub enum InterpreterError {
   #[error("Stack underflow")]
   StackUnderflow,
 }
+
+pub type InterpretterResult<T = ()> = Result<T, InterpreterError>;

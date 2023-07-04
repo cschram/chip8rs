@@ -4,14 +4,17 @@ mod instructions;
 mod memory;
 mod registers;
 
-pub use self::error::*;
 use self::{
+  error::*,
   frame_buffer::*,
   instructions::*,
   memory::*,
   registers::*,
 };
+use std::time::Duration;
 use rand::prelude::*;
+
+const INSTRUCTIONS_PER_SECOND: f32 = 700.0;
 
 pub struct Chip8 {
   memory: Memory,
@@ -48,13 +51,23 @@ impl Chip8 {
     DISPLAY_SCALE
   }
 
-  pub fn load_rom(&mut self, rom: &[u8]) -> Result<(), InterpreterError> {
+  pub fn load_rom(&mut self, rom: &[u8]) -> InterpretterResult {
     self.memory.load_rom(&rom)?;
     self.rom = Some(Vec::from(rom));
     Ok(())
   }
 
-  pub fn update(&mut self) -> Result<(), InterpreterError> {
+  pub fn update(&mut self, delta: &Duration) -> InterpretterResult {
+    let secs = delta.as_secs_f32();
+    let num_instructions = (INSTRUCTIONS_PER_SECOND * secs) as usize;
+    for _ in 0..num_instructions {
+      self.instructions.execute(
+        &mut self.memory,
+        &mut self.registers,
+        &mut self.frame_buffer,
+        &mut self.rng,
+      )?;
+    }
     Ok(())
   }
 

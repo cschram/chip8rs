@@ -1,4 +1,4 @@
-use crate::interpreter::InterpreterError;
+use crate::interpreter::error::InterpreterError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]

@@ -14,7 +14,7 @@ impl Default for FrameBuffer {
 }
 
 impl FrameBuffer {
-  pub fn get_i(&self, index: u16) -> Result<bool, InterpreterError> {
+  pub fn get_i(&self, index: u16) -> InterpretterResult<bool> {
     if (index as usize) < BUFFER_SIZE {
       Ok(self.0[index as usize] == 1)
     } else {
@@ -22,7 +22,7 @@ impl FrameBuffer {
     }
   }
 
-  pub fn set_i(&mut self, index: u16, value: bool) -> Result<(), InterpreterError> {
+  pub fn set_i(&mut self, index: u16, value: bool) -> InterpretterResult {
     if (index as usize) < BUFFER_SIZE {
       self.0[index as usize] = if value { 1 } else { 0 };
       Ok(())
@@ -31,11 +31,11 @@ impl FrameBuffer {
     }
   }
 
-  pub fn get_xy(&self, x: u16, y: u16) -> Result<bool, InterpreterError> {
+  pub fn get_xy(&self, x: u16, y: u16) -> InterpretterResult<bool> {
     self.get_i((y * 64) + x)
   }
 
-  pub fn set_xy(&mut self, x: u16, y: u16, value: bool) -> Result<(), InterpreterError> {
+  pub fn set_xy(&mut self, x: u16, y: u16, value: bool) -> InterpretterResult {
     self.set_i((y * 64) + x, value)
   }
 

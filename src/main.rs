@@ -10,6 +10,7 @@ use std::{
   io::{Read, BufReader},
   fs::File,
   env::current_dir,
+  time::Instant,
 };
 use log::error;
 use pixels::{Pixels, SurfaceTexture};
@@ -63,6 +64,7 @@ pub fn main() -> Result<(), Chip8Error> {
   };
 
   // Run event loop
+  let mut instant = Instant::now();
   event_loop.run(move |event, _, control_flow| {
     if let Event::RedrawRequested(_) = event {
       // Copy interprefer frame buffer to pixels frame buffer
@@ -94,11 +96,13 @@ pub fn main() -> Result<(), Chip8Error> {
         return;
       }
 
-      if let Err(err) = chip8.update() {
+      if let Err(err) = chip8.update(&instant.elapsed()) {
         error!("{err}");
         *control_flow = ControlFlow::Exit;
         return;
       }
+
+      instant = Instant::now();
     }
   });
 }
